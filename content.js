@@ -1,5 +1,5 @@
 // ============================================================
-// content.js — Brute-force & Resilient Orchestrator
+// content.js — Auto-Switching Orchestrator
 // ============================================================
 
 (function () {
@@ -17,7 +17,18 @@
         injectDraftButton();
         attachButtonListener();
       }
-    } catch (e) { console.error('[get-PR] Watchdog:', e); }
+
+      // Check if we should auto-resume after a tab switch
+      if (sessionStorage.getItem('getpr_auto_run') === 'true') {
+        const data = extractPRData();
+        if (data.diffLines || data.files.length > 0) {
+          sessionStorage.removeItem('getpr_auto_run');
+          document.querySelector('#getpr-trigger')?.click();
+        }
+      }
+    } catch (e) {
+      console.error('[get-PR] Watchdog:', e);
+    }
   }
 
   function attachButtonListener() {
@@ -33,9 +44,18 @@
       try {
         const data = extractPRData();
 
+        // --- Automatic Tab Switch Logic ---
         if (data.statusMsg === 'FILES_TAB_REQUIRED') {
-          showPanelError('Switch Tab Required', 'GitHub hides code changes on the current tab. Please click the "Files changed" tab so I can read the diff!');
-          throw new Error('FILES_TAB');
+          const filesTab = document.querySelector('#files_tab, a[data-tab-item="files"], .tabnav-tab[href*="files"]');
+          if (filesTab) {
+            showPanelLoading('Switching to "Files changed" tab...');
+            sessionStorage.setItem('getpr_auto_run', 'true');
+            filesTab.click();
+            return; // Stop here, watchdog will resume
+          } else {
+            showPanelError('Switch Tab Required', 'I need the "Files changed" tab to read the code, but I couldn\'t click it automatically. Please click it manually!');
+            throw new Error('FILES_TAB');
+          }
         }
 
         if (data.statusMsg === 'NO_DATA_FOUND') {
@@ -59,7 +79,7 @@
         } else if (err.message === 'NO_DATA') {
           msg = '⚠ No commits found';
         } else {
-          showPanelError('Generation Failed', err.message || 'Something went wrong while talking to the AI.');
+          showPanelError('Generation Failed', err.message || 'Connection error');
           if (err.message.includes('Rate limited')) msg = '⏳ Rate limited';
           else if (err.message.includes('401')) msg = '🔑 Login to Puter';
         }
