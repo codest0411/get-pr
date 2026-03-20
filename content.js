@@ -44,6 +44,10 @@
       try {
         const data = extractPRData();
 
+        if (data.statusMsg === 'PLEASE_OPEN_FILES_TAB') {
+          throw new Error('FILES_TAB');
+        }
+
         if (!data.files.length && !data.diffLines && !data.commits.length) {
           throw new Error('NO_DIFF');
         }
@@ -59,7 +63,8 @@
         hidePanel();
 
         let msg = '⚠ Error';
-        if (err.message === 'NO_DIFF') msg = '⚠ No commits';
+        if (err.message === 'FILES_TAB') msg = '⚠ Open "Files changed" tab';
+        else if (err.message === 'NO_DIFF') msg = '⚠ No commits found';
         else if (err.message.includes('Rate limited')) msg = '⏳ Rate limited';
         else if (err.message.includes('No internet')) msg = '📡 Offline';
         else if (err.message.includes('invalid JSON')) msg = '⚠ AI Error';
