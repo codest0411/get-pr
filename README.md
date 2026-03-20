@@ -21,7 +21,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-1e40af?style=for-the-badge&logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License MIT](https://img.shields.io/badge/License-MIT-e53e3e?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-38a169?style=for-the-badge)](CONTRIBUTING.md)
-[![Stars](https://img.shields.io/github/stars/your-username/get-PR?style=for-the-badge&color=f59e0b)](https://github.com/your-username/get-PR/stargazers)
+[![Stars](https://img.shields.io/github/stars/codest0411/get-PR?style=for-the-badge&color=f59e0b)](https://github.com/codest0411/get-PR/stargazers)
 
 <br/>
 
@@ -401,7 +401,7 @@ This is then formatted into clean Markdown and injected directly into the GitHub
 
 ```bash
 # Step 1 — Clone the repository
-git clone https://github.com/your-username/get-PR.git
+git clone https://github.com/codest0411/get-PR.git
 cd get-PR
 
 # Step 2 — Open Chrome Extensions page
@@ -666,7 +666,7 @@ git push origin feat/gitlab-support
 ```
 MIT License
 
-Copyright (c) 2026 get-PR Contributors
+Copyright (c) 2026 codest0411. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the "Software"),
@@ -689,11 +689,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 <div align="center">
 
-**[⭐ Star this repo](https://github.com/your-username/get-PR) if get-PR saved you time today!**
+**[⭐ Star this repo](https://github.com/codest0411/get-PR) if get-PR saved you time today!**
 
 <br/>
 
-[![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=for-the-badge&logo=github)](https://github.com/your-username)
+[![GitHub](https://img.shields.io/badge/GitHub-your--username-181717?style=for-the-badge&logo=github)](https://github.com/codest0411)
 [![Puter.js](https://img.shields.io/badge/Powered_by-Puter.js-7c3aed?style=for-the-badge)](https://puter.com)
 [![Claude](https://img.shields.io/badge/AI-Claude_Sonnet_4.6-d97706?style=for-the-badge&logo=anthropic)](https://anthropic.com)
 
