@@ -81,10 +81,12 @@
           msg = '⚠ Switch to "Files changed"';
         } else if (err.message === 'NO_DATA') {
           msg = '⚠ No commits found';
+        } else if (err.message === 'AUTH_REQUIRED' || err.message.includes('401')) {
+          showPanelError('Free Session Required', 'GitHub extensions need to refresh their connection to the free AI provider. Simply open https://puter.com once in a new tab (no signup needed), then come back and try again!');
+          msg = '🔑 Refresh AI Session';
         } else {
           showPanelError('Generation Failed', err.message || 'Connection error');
           if (err.message.includes('Rate limited')) msg = '⏳ Rate limited';
-          else if (err.message.includes('401')) msg = '🔑 Login to Puter';
         }
         
         _getprSetButtonError(btn, msg);
