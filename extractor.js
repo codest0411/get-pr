@@ -8,144 +8,199 @@ function extractPRData() {
   const repoName = urlParts.slice(0, 2).join('/');
 
   // ---- Branch names ----
-  const headRefEl = document.querySelector('.head-ref a, .head-ref');
-  let branch = headRefEl ? headRefEl.textContent.trim() : '';
-
+  let branch = '';
   let baseBranch = '';
-  const baseRefEl = document.querySelector('.base-ref a, .base-ref');
-  if (baseRefEl) {
-    baseBranch = baseRefEl.textContent.trim();
-  }
 
-  // Fallback: parse from /compare/ URL  e.g. /compare/main...feature-branch
-  if (!branch && url.includes('/compare/')) {
-    const comparePart = url.split('/compare/').pop().split('?')[0];
-    const parts = comparePart.split('...');
-    if (parts.length === 2) {
-      baseBranch = baseBranch || parts[0];
-      branch = parts[1];
+  // Try multiple selectors for branch refs (GitHub changes these often)
+  const headRefSelectors = [
+    '.head-ref a',
+    '.head-ref',
+    '.commit-ref.head-ref',
+    'span.commit-ref:last-of-type',
+    '[data-pjax="#repo-content-pjax-container"] .commit-ref:last-child'
+  ];
+  for (const sel of headRefSelectors) {
+    const el = document.querySelector(sel);
+    if (el && el.textContent.trim()) {
+      branch = el.textContent.trim();
+      break;
     }
   }
 
-  // ---- PR title (pre-filled on creation page) ----
-  const titleEl = document.querySelector('#pull_request_title');
-  const title = titleEl ? titleEl.value.trim() : '';
+  const baseRefSelectors = [
+    '.base-ref a',
+    '.base-ref',
+    '.commit-ref.base-ref',
+    'span.commit-ref:first-of-type'
+  ];
+  for (const sel of baseRefSelectors) {
+    const el = document.querySelector(sel);
+    if (el && el.textContent.trim()) {
+      baseBranch = el.textContent.trim();
+      break;
+    }
+  }
+
+  // Fallback: parse from URL  e.g. /compare/main...feature-branch
+  if (url.includes('/compare/')) {
+    const comparePart = url.split('/compare/').pop().split('?')[0];
+    const parts = comparePart.split('...');
+    if (parts.length === 2) {
+      baseBranch = baseBranch || decodeURIComponent(parts[0]);
+      branch = branch || decodeURIComponent(parts[1]);
+    }
+  }
+
+  // ---- PR title ----
+  const titleEl =
+    document.querySelector('#pull_request_title') ||
+    document.querySelector('.js-issue-title') ||
+    document.querySelector('[data-testid="issue-title"]') ||
+    document.querySelector('bdi.js-issue-title') ||
+    document.querySelector('h1.gh-header-title span');
+  const title = titleEl ? (titleEl.value || titleEl.textContent || '').trim() : '';
 
   // ---- Changed files ----
-  const fileHeaders = document.querySelectorAll(
-    '.file-header[data-path], .file-info [title], .file-header a[title], copilot-diff-entry'
-  );
   const files = [];
-  fileHeaders.forEach(el => {
-    const path =
-      el.getAttribute('data-path') ||
-      el.getAttribute('title') ||
-      el.textContent.trim();
-    if (path && !files.includes(path)) files.push(path);
-  });
-
-  // Also try alternate selector used on newer GitHub UI
-  if (files.length === 0) {
-    document.querySelectorAll('[data-file-path]').forEach(el => {
-      const p = el.getAttribute('data-file-path');
-      if (p && !files.includes(p)) files.push(p);
+  const fileSelectors = [
+    '.file-header[data-path]',
+    '[data-file-path]',
+    '.file-info a[title]',
+    'copilot-diff-entry',
+    '.js-file-header[data-path]',
+    '.file a.Link--primary[title]'
+  ];
+  for (const sel of fileSelectors) {
+    document.querySelectorAll(sel).forEach(el => {
+      const path =
+        el.getAttribute('data-path') ||
+        el.getAttribute('data-file-path') ||
+        el.getAttribute('title') ||
+        el.textContent.trim();
+      if (path && path.length < 300 && !files.includes(path)) files.push(path);
     });
+    if (files.length > 0) break;
   }
 
   // ---- File types ----
   const fileTypes = files.map(f => {
-    const ext = f.split('.').pop();
-    return ext ? `.${ext}` : 'unknown';
+    const parts = f.split('.');
+    return parts.length > 1 ? `.${parts.pop()}` : 'unknown';
   });
 
   // ---- Commit messages ----
-  const commitEls = document.querySelectorAll(
-    '.commit-title, .commit-message, .Timeline-Item--condensed a.Link--primary'
-  );
   const commits = [];
-  commitEls.forEach(el => {
-    const text = el.textContent.trim();
-    if (text && !commits.includes(text)) commits.push(text);
-  });
+  const commitSelectors = [
+    '.commit-title a',
+    '.commit-title',
+    '.commit-message',
+    '.Timeline-Item--condensed a.Link--primary',
+    'a.message',
+    'li.Box-row a.Link--primary'
+  ];
+  for (const sel of commitSelectors) {
+    document.querySelectorAll(sel).forEach(el => {
+      const text = el.textContent.trim();
+      if (text && text.length > 3 && !commits.includes(text)) commits.push(text);
+    });
+    if (commits.length > 0) break;
+  }
 
   // ---- Diff stats ----
   let additions = 0;
   let deletions = 0;
-  const diffstatEl = document.querySelector(
-    '#diffstat, .diffstat, .toc-diff-stats, .js-diff-progressive-container'
-  );
-  if (diffstatEl) {
-    const statText = diffstatEl.textContent;
-    const addMatch = statText.match(/([\d,]+)\s*addition/);
-    const delMatch = statText.match(/([\d,]+)\s*deletion/);
-    if (addMatch) additions = parseInt(addMatch[1].replace(/,/g, ''), 10);
-    if (delMatch) deletions = parseInt(delMatch[1].replace(/,/g, ''), 10);
+
+  // Try multiple selectors for stats
+  const statSelectors = [
+    '#diffstat',
+    '.diffstat',
+    '.toc-diff-stats',
+    '#files_tab_counter',
+    '.js-diff-progressive-container'
+  ];
+  for (const sel of statSelectors) {
+    const el = document.querySelector(sel);
+    if (el) {
+      const text = el.textContent;
+      const addMatch = text.match(/([\d,]+)\s*addition/);
+      const delMatch = text.match(/([\d,]+)\s*deletion/);
+      if (addMatch) additions = parseInt(addMatch[1].replace(/,/g, ''), 10);
+      if (delMatch) deletions = parseInt(delMatch[1].replace(/,/g, ''), 10);
+      if (additions || deletions) break;
+    }
   }
 
-  // Fallback: count green/red stat elements
-  if (additions === 0 && deletions === 0) {
-    const statNumbers = document.querySelectorAll('.diffstat .text-green, .diffstat .text-red, .color-fg-success, .color-fg-danger');
-    statNumbers.forEach(el => {
+  // Fallback: count colored stat numbers
+  if (!additions && !deletions) {
+    document.querySelectorAll('.color-fg-success, .color-fg-danger, .text-green, .text-red').forEach(el => {
       const num = parseInt(el.textContent.replace(/[^0-9]/g, ''), 10);
       if (isNaN(num)) return;
-      if (el.classList.contains('text-green') || el.classList.contains('color-fg-success')) {
-        additions += num;
-      } else {
-        deletions += num;
-      }
+      const classes = el.className || '';
+      if (classes.includes('success') || classes.includes('green')) additions += num;
+      else if (classes.includes('danger') || classes.includes('red')) deletions += num;
     });
   }
 
-  // ---- Diff lines (limit to 300 lines) ----
-  const diffLineEls = document.querySelectorAll(
-    '.blob-code-inner, .blob-code, td.blob-code'
-  );
+  // ---- Diff lines (limit 300) ----
   const diffLinesArr = [];
   let lineCount = 0;
   const MAX_DIFF_LINES = 300;
 
-  for (const el of diffLineEls) {
-    if (lineCount >= MAX_DIFF_LINES) break;
-    const parent = el.closest('tr, .blob-code');
-    let prefix = ' ';
-    if (parent) {
-      if (
-        parent.classList.contains('blob-code-addition') ||
-        parent.classList.contains('addition')
-      ) {
-        prefix = '+';
-      } else if (
-        parent.classList.contains('blob-code-deletion') ||
-        parent.classList.contains('deletion')
-      ) {
-        prefix = '-';
+  const diffLineSelectors = [
+    'td.blob-code-inner',
+    '.blob-code-inner',
+    'td.blob-code',
+    '.blob-code'
+  ];
+
+  for (const sel of diffLineSelectors) {
+    const els = document.querySelectorAll(sel);
+    if (els.length === 0) continue;
+
+    for (const el of els) {
+      if (lineCount >= MAX_DIFF_LINES) break;
+      const parent = el.closest('tr') || el.closest('.blob-code') || el;
+      let prefix = ' ';
+      const parentClass = parent.className || '';
+      if (parentClass.includes('addition')) prefix = '+';
+      else if (parentClass.includes('deletion')) prefix = '-';
+
+      const lineText = el.textContent;
+      if (lineText && lineText.trim()) {
+        diffLinesArr.push(`${prefix} ${lineText}`);
+        lineCount++;
       }
     }
-    const lineText = el.textContent;
-    if (lineText.trim()) {
-      diffLinesArr.push(`${prefix} ${lineText}`);
-      lineCount++;
-    }
+    if (diffLinesArr.length > 0) break;
   }
   const diffLines = diffLinesArr.join('\n');
 
   // ---- Detect PR type ----
-  const branchLower = branch.toLowerCase();
+  const branchLower = (branch || '').toLowerCase();
   let detectedType = 'general';
 
-  if (branchLower.includes('fix/') || branchLower.includes('bug') || branchLower.includes('hotfix')) {
+  if (/fix[\/\-]|bug|hotfix/.test(branchLower)) {
     detectedType = 'bug fix';
-  } else if (branchLower.includes('feat/') || branchLower.includes('feature/')) {
+  } else if (/feat[\/\-]|feature[\/\-]/.test(branchLower)) {
     detectedType = 'feature';
-  } else if (branchLower.includes('refactor/')) {
+  } else if (/refactor[\/\-]/.test(branchLower)) {
     detectedType = 'refactor';
-  } else if (branchLower.includes('docs/') || branchLower.includes('doc/')) {
+  } else if (/docs?[\/\-]/.test(branchLower)) {
     detectedType = 'docs';
-  } else if (files.length > 0 && files.every(f => f.endsWith('.md') || f.endsWith('.txt') || f.endsWith('.rst'))) {
+  } else if (files.length > 0 && files.every(f => /\.(md|txt|rst|doc)$/i.test(f))) {
     detectedType = 'docs';
   } else if (files.length > 0 && files.every(f => /\.(test|spec)\.\w+$/.test(f) || f.includes('__tests__'))) {
     detectedType = 'tests';
   }
+
+  console.log('[get-PR] Extracted:', {
+    branch, baseBranch, title,
+    filesCount: files.length,
+    commitsCount: commits.length,
+    additions, deletions,
+    diffLinesCount: diffLinesArr.length,
+    detectedType, repoName
+  });
 
   return {
     branch,

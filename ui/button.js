@@ -1,5 +1,5 @@
 // ============================================================
-// ui/button.js — Injects the "✨ Draft with AI" floating button
+// ui/button.js — Injects the floating "✨ Draft with AI" button
 // ============================================================
 
 // eslint-disable-next-line no-unused-vars
@@ -7,27 +7,9 @@ function injectDraftButton() {
   // Don't inject twice
   if (document.querySelector('.getpr-toolbar')) return;
 
-  // Find the PR description textarea (creation page or edit)
-  const textarea =
-    document.querySelector('#pull_request_body') ||
-    document.querySelector('.js-comment-body') ||
-    document.querySelector('textarea[name="pull_request[body]"]');
-
-  if (!textarea) return;
-
-  // Find a suitable anchor — the toolbar above the textarea
-  const anchor =
-    textarea.closest('.js-write-bucket')?.parentElement ||
-    textarea.closest('.write-content')?.parentElement ||
-    textarea.closest('.comment-form-head')?.parentElement ||
-    textarea.parentElement;
-
-  if (!anchor) return;
-
-  // Detect dark mode
   const isDark = _getprIsDark();
 
-  // ---- Build toolbar ----
+  // ---- Build floating toolbar ----
   const toolbar = document.createElement('div');
   toolbar.className = 'getpr-toolbar' + (isDark ? ' getpr-dark' : '');
 
@@ -51,11 +33,56 @@ function injectDraftButton() {
   toolbar.appendChild(toneSelect);
   toolbar.appendChild(btn);
 
-  // Insert BEFORE the textarea container
-  anchor.insertBefore(toolbar, anchor.firstChild);
+  // ---- Try to place near the textarea, otherwise float ----
+  let placed = false;
+
+  // 1. Try PR creation form textarea
+  const textarea =
+    document.querySelector('#pull_request_body') ||
+    document.querySelector('textarea[name="pull_request[body]"]') ||
+    document.querySelector('.js-comment-body') ||
+    document.querySelector('textarea.comment-form-textarea');
+
+  if (textarea) {
+    // Find the write/preview tab bar (best spot)
+    const tabNav =
+      textarea.closest('.js-previewable-comment-form')?.querySelector('.tabnav-tabs, .UnderlineNav') ||
+      textarea.closest('.write-content')?.parentElement?.querySelector('.tabnav-tabs') ||
+      textarea.closest('.CommentBox')?.querySelector('.tabnav-tabs, .UnderlineNav');
+
+    if (tabNav) {
+      tabNav.style.display = 'flex';
+      tabNav.style.alignItems = 'center';
+      tabNav.style.justifyContent = 'space-between';
+      toolbar.style.position = 'relative';
+      toolbar.style.right = 'auto';
+      toolbar.style.bottom = 'auto';
+      tabNav.appendChild(toolbar);
+      placed = true;
+    } else {
+      // Place above textarea
+      const parent = textarea.parentElement;
+      if (parent) {
+        toolbar.style.position = 'relative';
+        toolbar.style.right = 'auto';
+        toolbar.style.bottom = 'auto';
+        toolbar.style.marginBottom = '8px';
+        parent.insertBefore(toolbar, textarea);
+        placed = true;
+      }
+    }
+  }
+
+  // 2. Fallback: float as fixed button in bottom-right
+  if (!placed) {
+    toolbar.classList.add('getpr-toolbar--floating');
+    document.body.appendChild(toolbar);
+  }
+
+  console.log('[get-PR] Button injected successfully', placed ? '(inline)' : '(floating)');
 }
 
-// Helpers
+// ---- Helpers ----
 function _getprIsDark() {
   const html = document.documentElement;
   return (

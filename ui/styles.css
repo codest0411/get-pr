@@ -54,6 +54,42 @@
   margin-bottom: 8px;
   justify-content: flex-end;
   font-family: var(--gpr-font);
+  z-index: 9999;
+}
+
+/* Floating variant — bottom-right when textarea not found */
+.getpr-toolbar--floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  margin-bottom: 0;
+  padding: 10px 14px;
+  background: var(--gpr-bg, #ffffff);
+  border: 1px solid var(--gpr-border, #d1d9e0);
+  border-radius: var(--gpr-radius-lg, 10px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 99997;
+  animation: getpr-float-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode for floating toolbar */
+[data-color-mode="dark"] .getpr-toolbar--floating,
+[data-dark-theme="dark"] .getpr-toolbar--floating,
+.getpr-toolbar--floating.getpr-dark {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+@keyframes getpr-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ---- Main Button ---- */

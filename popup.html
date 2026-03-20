@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .logo {
+      width: 32px;
+      height: 32px;
+      background: #7c3aed;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .sparkle { font-size: 16px; }
+    .desc {
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .steps {
+      background: #161b22;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      background: #7c3aed;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .step-text { color: #c9d1d9; }
+    .step-text strong { color: #e6edf3; }
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #484f58;
+    }
+    .footer a {
+      color: #7c3aed;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      background: rgba(124, 58, 237, 0.15);
+      color: #a78bfa;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">PR</div>
+    <div class="title">get-PR <span class="sparkle">✨</span></div>
+  </div>
+
+  <div class="badge">Free • No API Key • Claude Sonnet 4.6</div>
+
+  <div class="desc">
+    Auto-generate perfect PR descriptions on any GitHub Pull Request page.
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Open any <strong>GitHub PR</strong> or <strong>Compare</strong> page</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Look for the <strong>"✨ Draft with AI"</strong> button</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Click it → <strong>AI fills your PR description</strong></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://puter.com" target="_blank">Puter.js</a> •
+    <a href="https://github.com/codest0411/get-pr" target="_blank">GitHub</a>
+  </div>
+</body>
+</html>
