@@ -1,35 +1,25 @@
 // ============================================================
-// content.js — Brute-force orchestrator for get-PR
+// content.js — Brute-force & Resilient Orchestrator
 // ============================================================
 
 (function () {
   'use strict';
 
-  // Debug — confirm script is loading
-  console.log('%c[get-PR] ✅ Content script active', 'background: #7c3aed; color: #fff; padding: 2px 5px; border-radius: 3px;');
+  console.log('%c[get-PR] ✅ Active', 'background: #7c3aed; color: #fff; padding: 2px 5px; border-radius: 3px;');
 
-  const INJECT_INTERVAL = 2000; // 2s watchdog
+  const INJECT_INTERVAL = 2000;
 
-  // ---- Main Injection Watchdog ----
   function watchdog() {
     try {
-      const url = window.location.href;
-      // Broad match for any GitHub page that might be a PR/Compare
-      const isPR = /\/(pull|pulls|compare)\//.test(url);
-
+      const isPR = /\/(pull|pulls|compare)\//.test(window.location.href);
       if (!isPR) return;
-
-      // If button is missing, inject it
       if (!document.querySelector('.getpr-toolbar')) {
         injectDraftButton();
         attachButtonListener();
       }
-    } catch (e) {
-      console.error('[get-PR] Watchdog error:', e);
-    }
+    } catch (e) { console.error('[get-PR] Watchdog:', e); }
   }
 
-  // ---- Attach click handler ----
   function attachButtonListener() {
     const btn = document.querySelector('#getpr-trigger');
     if (!btn || btn.dataset.listening === 'true') return;
@@ -37,21 +27,23 @@
 
     btn.addEventListener('click', async () => {
       const tone = document.querySelector('#getpr-tone')?.value || 'professional';
-
       _getprSetButtonLoading(btn);
-      showPanelLoading();
+      showPanelLoading('Analyzing PR data...');
 
       try {
         const data = extractPRData();
 
-        if (data.statusMsg === 'PLEASE_OPEN_FILES_TAB') {
+        if (data.statusMsg === 'FILES_TAB_REQUIRED') {
+          showPanelError('Switch Tab Required', 'GitHub hides code changes on the current tab. Please click the "Files changed" tab so I can read the diff!');
           throw new Error('FILES_TAB');
         }
 
-        if (!data.files.length && !data.diffLines && !data.commits.length) {
-          throw new Error('NO_DIFF');
+        if (data.statusMsg === 'NO_DATA_FOUND') {
+          showPanelError('No Data Found', 'I couldn\'t find any commits or file changes on this page. Are you sure this PR has code changes?');
+          throw new Error('NO_DATA');
         }
 
+        showPanelLoading('Calling AI (Claude/GPT)...');
         const prompt = buildPrompt(data, tone);
         const result = await callClaude(prompt);
 
@@ -60,36 +52,31 @@
         _getprSetButtonDone(btn);
       } catch (err) {
         console.error('[get-PR] Error:', err);
-        hidePanel();
-
+        
         let msg = '⚠ Error';
-        if (err.message === 'FILES_TAB') msg = '⚠ Open "Files changed" tab';
-        else if (err.message === 'NO_DIFF') msg = '⚠ No commits found';
-        else if (err.message.includes('Rate limited')) msg = '⏳ Rate limited';
-        else if (err.message.includes('No internet')) msg = '📡 Offline';
-        else if (err.message.includes('invalid JSON')) msg = '⚠ AI Error';
-
+        if (err.message === 'FILES_TAB') {
+          msg = '⚠ Switch to "Files changed"';
+        } else if (err.message === 'NO_DATA') {
+          msg = '⚠ No commits found';
+        } else {
+          showPanelError('Generation Failed', err.message || 'Something went wrong while talking to the AI.');
+          if (err.message.includes('Rate limited')) msg = '⏳ Rate limited';
+          else if (err.message.includes('401')) msg = '🔑 Login to Puter';
+        }
+        
         _getprSetButtonError(btn, msg);
       }
     });
   }
 
-  // ---- Start Watchdog ----
-  // Initial run
+  // Init
   watchdog();
-  // 2s intervals to defeat GitHub SPA navigation
   setInterval(watchdog, INJECT_INTERVAL);
 
-  // Still observe for route changes for instant injection
   if (typeof navigation !== 'undefined') {
     navigation.addEventListener('navigatesuccess', () => {
       document.querySelector('.getpr-toolbar')?.remove();
       watchdog();
     });
   }
-
-  // Cleanup on page unload (optional)
-  window.addEventListener('beforeunload', () => {
-    document.querySelector('.getpr-toolbar')?.remove();
-  });
 })();

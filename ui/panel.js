@@ -28,11 +28,37 @@ function hidePanel() {
   if (_getprOverlayEl) _getprOverlayEl.classList.remove('getpr-visible');
 }
 
-function showPanelLoading() {
+function showPanelError(title, msg) {
   if (!_getprPanelEl) _createPanelDOM();
 
   const body = _getprPanelEl.querySelector('.getpr-panel-body');
   body.innerHTML = `
+    <div style="padding: 24px; text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 16px;">🔍</div>
+      <h3 style="margin-bottom: 12px; color: var(--gpr-text);">${_esc(title)}</h3>
+      <p style="font-size: 13px; color: var(--gpr-text-secondary); line-height: 1.6; margin-bottom: 24px;">
+        ${_esc(msg)}
+      </p>
+      <button onclick="document.querySelector('#getpr-trigger').click();" class="getpr-panel-footer-btn getpr-panel-footer-btn--primary">
+        🔄 Try Again
+      </button>
+    </div>
+  `;
+
+  requestAnimationFrame(() => {
+    _getprOverlayEl.classList.add('getpr-visible');
+    _getprPanelEl.classList.add('getpr-open');
+  });
+}
+
+function showPanelLoading(statusText = 'Generating PR description...') {
+  if (!_getprPanelEl) _createPanelDOM();
+
+  const body = _getprPanelEl.querySelector('.getpr-panel-body');
+  body.innerHTML = `
+    <div style="padding: 20px 20px 10px; font-size: 13px; font-weight: 600; color: var(--gpr-purple);">
+      ✨ ${statusText}
+    </div>
     <div class="getpr-skeleton">
       <div class="getpr-skeleton-line"></div>
       <div class="getpr-skeleton-line"></div>
