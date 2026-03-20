@@ -23,7 +23,10 @@
         const data = extractPRData();
         if (data.diffLines || data.files.length > 0) {
           sessionStorage.removeItem('getpr_auto_run');
-          document.querySelector('#getpr-trigger')?.click();
+          console.log('[get-PR] Auto-resuming after tab switch...');
+          setTimeout(() => {
+            document.querySelector('#getpr-trigger')?.click();
+          }, 800);
         }
       }
     } catch (e) {
