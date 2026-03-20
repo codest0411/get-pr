@@ -12,6 +12,7 @@
     {
       "matches": [
         "https://github.com/*/pull/*",
+        "https://github.com/*/pulls/*",
         "https://github.com/*/compare/*"
       ],
       "js": [

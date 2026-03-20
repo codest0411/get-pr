@@ -51,25 +51,29 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   justify-content: flex-end;
   font-family: var(--gpr-font);
-  z-index: 9999;
+  z-index: 2000000000;
+  position: relative;
 }
 
 /* Floating variant — bottom-right when textarea not found */
 .getpr-toolbar--floating {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
   margin-bottom: 0;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--gpr-bg, #ffffff);
   border: 1px solid var(--gpr-border, #d1d9e0);
-  border-radius: var(--gpr-radius-lg, 10px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  z-index: 99997;
-  animation: getpr-float-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 2147483647 !important;
+  animation: getpr-float-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Dark mode for floating toolbar */

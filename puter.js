@@ -3,27 +3,25 @@
 // ============================================================
 
 async function callClaude(userPrompt) {
-  const MAX_RETRIES = 2;
+  // Models to try in order
+  const MODELS = ['claude-3-5-sonnet', 'gpt-4o-mini'];
   let lastError = null;
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+  for (const model of MODELS) {
     try {
       const response = await fetch('https://api.puter.com/drivers/call', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'omit', // Change to 'include' if they are logged in, but let's try 'omit' first for truly free
         body: JSON.stringify({
           interface: 'puter-chat-completion',
-          driver: 'claude-sonnet-4-6',
-          test_mode: true,
+          driver: model,
           method: 'complete',
           args: {
             messages: [
               {
                 role: 'system',
-                content:
-                  'You are a senior software engineer writing PR descriptions. Always respond with ONLY valid JSON. No markdown fences, no explanation, no preamble. Just raw JSON.'
+                content: 'You are a senior software engineer. Respond with ONLY valid JSON.'
               },
               {
                 role: 'user',
@@ -34,12 +32,13 @@ async function callClaude(userPrompt) {
         })
       });
 
-      if (response.status === 429) {
-        throw new Error('RATE_LIMITED');
+      if (response.status === 401 && model === 'claude-3-5-sonnet') {
+        console.warn('[get-PR] Claude 401 (Unauthorized), trying GPT-4o-mini...');
+        continue;
       }
 
       if (!response.ok) {
-        throw new Error(`Puter API call failed: HTTP ${response.status}`);
+        throw new Error(`Puter API (${model}) failed: HTTP ${response.status}`);
       }
 
       const data = await response.json();
